@@ -1,0 +1,8 @@
+{
+  "name": "compass-functions",
+  "private": true,
+  "description": "Netlify Functions backend for the Compass award-letter parser.",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}
