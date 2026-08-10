@@ -85,9 +85,9 @@ exports.handler = async (event) => {
       const detail = await resp.text().catch(() => "");
       return { statusCode: 502, headers, body: JSON.stringify({ error: "AI request failed.", detail: detail.slice(0, 500) }) };
     }
-
     const data = await resp.json();
-    const reply = (data && data.content && data.content[0] && data.content[0].text) || "";
+   const textBlock = (data && Array.isArray(data.content)) ? data.content.find((b) => b && b.type === "text") : null;
+const reply = (textBlock && textBlock.text) || "";
     if (!reply.trim()) {
       return { statusCode: 502, headers, body: JSON.stringify({ error: "Empty response from AI." }) };
     }
