@@ -8,20 +8,16 @@
 // site's settings (Site configuration -> Environment variables). The key
 // only ever lives here, server-side — it is never sent to the browser.
 //
-// COST PROTECTION: same approach as parse-award-letter.js — independent
-// per-IP and site-wide daily caps, enforced with Netlify Blobs, checked
-// before the paid API is ever called. Also set a hard spending cap in your
-// Anthropic console (console.anthropic.com -> Settings -> Billing) as a
-// second, independent backstop.
-
-const { getStore } = require("@netlify/blobs");
+// COST PROTECTION: message length, history length, and output tokens are
+// all capped below to bound the cost of any single call. The real backstop
+// against a runaway bill is a hard spending cap set in the Anthropic
+// console (console.anthropic.com -> Settings -> Billing) — that's the
+// guarantee that can't be bypassed by a bug here.
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-sonnet-5"; // update if your Anthropic account uses a different model id
 const MAX_MESSAGE_CHARS = 4000;
 const MAX_HISTORY_MESSAGES = 20; // only the most recent N messages are sent, to bound token growth in long chats
-const PER_IP_HOURLY_LIMIT = 15; // max chat messages from one connection per rolling hour
-const DAILY_GLOBAL_LIMIT = Number(process.env.DAILY_REQUEST_LIMIT) || 300; // max chat messages site-wide per day, across every visitor
 
 const SYSTEM_PROMPT = [
   "You are the \"Ask a Question\" assistant inside Compass, a free California college financial-aid app for students and families.",
@@ -31,23 +27,6 @@ const SYSTEM_PROMPT = [
   "If the user describes having a real financial aid award/offer letter they want help reading or comparing, tell them Compass has a dedicated tool for that on this same page — the \"Have a real award letter?\" box below the chat, where AI reads the letter and fills in the numbers on the Offers & Affordability page for them.",
   "If a question is outside financial aid for college (unrelated topics), politely redirect back to what you can help with.",
 ].join(" ");
-
-function getClientIp(event) {
-  const h = event.headers || {};
-  return (
-    h["x-nf-client-connection-ip"] ||
-    h["client-ip"] ||
-    (h["x-forwarded-for"] || "").split(",")[0].trim() ||
-    "unknown"
-  );
-}
-
-async function checkAndIncrement(store, key, limit) {
-  const current = (await store.get(key, { type: "json" })) || { count: 0 };
-  if (current.count >= limit) return false;
-  await store.setJSON(key, { count: current.count + 1 });
-  return true;
-}
 
 exports.handler = async (event) => {
   const headers = {
@@ -84,21 +63,6 @@ exports.handler = async (event) => {
 
   if (!messages.length || messages[messages.length - 1].role !== "user") {
     return { statusCode: 400, headers, body: JSON.stringify({ error: "No user message provided." }) };
-  }
-
-  const store = getStore("rate-limits");
-  const now = new Date();
-  const hourBucket = now.toISOString().slice(0, 13);
-  const dayBucket = now.toISOString().slice(0, 10);
-  const ip = getClientIp(event);
-
-  const globalOk = await checkAndIncrement(store, "chat-global:" + dayBucket, DAILY_GLOBAL_LIMIT);
-  if (!globalOk) {
-    return { statusCode: 429, headers, body: JSON.stringify({ error: "This feature has hit its daily usage limit site-wide — please try again tomorrow." }) };
-  }
-  const ipOk = await checkAndIncrement(store, "chat-ip:" + ip + ":" + hourBucket, PER_IP_HOURLY_LIMIT);
-  if (!ipOk) {
-    return { statusCode: 429, headers, body: JSON.stringify({ error: "Too many messages from your connection — please wait a bit and try again." }) };
   }
 
   try {
