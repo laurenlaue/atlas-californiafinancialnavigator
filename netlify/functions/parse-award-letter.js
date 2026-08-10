@@ -93,7 +93,8 @@ exports.handler = async (event) => {
     }
 
     const data = await resp.json();
-    const raw = (data && data.content && data.content[0] && data.content[0].text) || "";
+    const textBlock = (data && Array.isArray(data.content)) ? data.content.find((b) => b && b.type === "text") : null;
+    const raw = (textBlock && textBlock.text) || "";
     const match = raw.match(/\{[\s\S]*\}/);
     let parsed;
     try {
