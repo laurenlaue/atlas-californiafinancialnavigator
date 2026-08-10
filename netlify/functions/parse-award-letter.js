@@ -7,42 +7,15 @@
 // only ever lives here, server-side — it is never sent to the browser.
 //
 // COST PROTECTION: this app has no accounts/login, so this endpoint is
-// reachable by anyone, not just people using the form. Two independent caps
-// guard against a runaway bill: a per-IP hourly limit (stops one abusive
-// caller) and a site-wide daily limit (a hard ceiling on total possible
-// spend regardless of how many different callers there are). Both are
-// enforced with Netlify Blobs, so no external database is needed. Adjust
-// the numbers below to taste, and ALSO set a hard spending cap in your
-// Anthropic console (console.anthropic.com -> Settings -> Billing) as a
-// second, independent backstop — that's the only guarantee that can never
-// be bypassed by a bug here.
-
-const { getStore } = require("@netlify/blobs");
+// reachable by anyone, not just people using the form. Input length and
+// output tokens are both capped below to bound the cost of any single
+// call. The real backstop against a runaway bill is a hard spending cap
+// set in the Anthropic console (console.anthropic.com -> Settings ->
+// Billing) — that's the guarantee that can't be bypassed by a bug here.
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-sonnet-5"; // update if your Anthropic account uses a different model id
 const MAX_INPUT_CHARS = 20000;
-const PER_IP_HOURLY_LIMIT = 8; // max parse requests from one connection per rolling hour
-const DAILY_GLOBAL_LIMIT = Number(process.env.DAILY_REQUEST_LIMIT) || 150; // max parse requests site-wide per day, across every visitor
-
-function getClientIp(event) {
-  const h = event.headers || {};
-  return (
-    h["x-nf-client-connection-ip"] ||
-    h["client-ip"] ||
-    (h["x-forwarded-for"] || "").split(",")[0].trim() ||
-    "unknown"
-  );
-}
-
-// Best-effort counter, not perfectly atomic under heavy concurrency — the
-// goal is stopping runaway cost, not exact request accounting.
-async function checkAndIncrement(store, key, limit) {
-  const current = (await store.get(key, { type: "json" })) || { count: 0 };
-  if (current.count >= limit) return false;
-  await store.setJSON(key, { count: current.count + 1 });
-  return true;
-}
 
 exports.handler = async (event) => {
   const headers = {
@@ -74,23 +47,6 @@ exports.handler = async (event) => {
   const text = String(payload.text || "").slice(0, MAX_INPUT_CHARS).trim();
   if (!text) {
     return { statusCode: 400, headers, body: JSON.stringify({ error: "No letter text provided." }) };
-  }
-
-  // Rate limits are checked BEFORE calling the paid API, so a blocked
-  // request never costs anything.
-  const store = getStore("rate-limits");
-  const now = new Date();
-  const hourBucket = now.toISOString().slice(0, 13); // e.g. "2026-08-09T17"
-  const dayBucket = now.toISOString().slice(0, 10); // e.g. "2026-08-09"
-  const ip = getClientIp(event);
-
-  const globalOk = await checkAndIncrement(store, "global:" + dayBucket, DAILY_GLOBAL_LIMIT);
-  if (!globalOk) {
-    return { statusCode: 429, headers, body: JSON.stringify({ error: "This feature has hit its daily usage limit site-wide — please try again tomorrow, or enter the offer manually below." }) };
-  }
-  const ipOk = await checkAndIncrement(store, "ip:" + ip + ":" + hourBucket, PER_IP_HOURLY_LIMIT);
-  if (!ipOk) {
-    return { statusCode: 429, headers, body: JSON.stringify({ error: "Too many requests from your connection — please wait a bit and try again, or enter the offer manually below." }) };
   }
 
   const prompt = [
