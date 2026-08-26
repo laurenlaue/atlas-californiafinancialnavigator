@@ -6,21 +6,21 @@
 <title>Atlas — California Financial Navigator</title>
 <meta name="description" content="A free, no-account roadmap for paying for California college — FAFSA, state aid, scholarships, and comparing offers, built on real verified data.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://compass-financialaid.netlify.app/">
+<link rel="canonical" href="https://atlas-californiafinancialnavigator.netlify.app/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Atlas">
-<meta property="og:url" content="https://compass-financialaid.netlify.app/">
+<meta property="og:url" content="https://atlas-californiafinancialnavigator.netlify.app/">
 <meta property="og:title" content="Atlas — California Financial Navigator">
 <meta property="og:description" content="A free, no-account roadmap for paying for California college — FAFSA, state aid, scholarships, and comparing offers, built on real verified data.">
 <meta property="og:locale" content="en_US">
 <meta property="og:locale:alternate" content="es_ES">
-<meta property="og:image" content="https://compass-financialaid.netlify.app/og-image.jpg">
+<meta property="og:image" content="https://atlas-californiafinancialnavigator.netlify.app/og-image.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Atlas — California Financial Navigator">
 <meta name="twitter:description" content="A free, no-account roadmap for paying for California college — FAFSA, state aid, scholarships, and comparing offers, built on real verified data.">
-<meta name="twitter:image" content="https://compass-financialaid.netlify.app/og-image.jpg">
+<meta name="twitter:image" content="https://atlas-californiafinancialnavigator.netlify.app/og-image.jpg">
 <meta name="theme-color" content="#0d1420">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -74,6 +74,11 @@
        validator on hand). Deliberately independent of brand color — kept
        unchanged across every palette pass so saved charts stay comparable. */
     --coa-tuition:#2a78d6; --coa-housing:#1baf7a; --coa-other:#eb6834;
+    /* Offer-comparison stacked-bar slots — CVD-validated as a set (dataviz
+       skill validator, all 5 checks pass). Kept independent of --ok/--warn/
+       --danger since those are single-status tokens, not built to sit next
+       to each other simultaneously in one chart. */
+    --c-aid:#166534; --c-work:#3d7ab5; --c-loan:#d97706; --c-gap:#9f1239;
     --banner-info-border:#c3ddf0; --banner-warn-border:#fde68a; --banner-warn-text:#92400e; --banner-escalate-border:#fecaca;
     --role-student-bg:#e0e7ff; --role-student-text:#3730a3; --role-parent-bg:#fce7f3; --role-parent-text:#9d174d;
     --panel-rgb:255,255,255;
@@ -101,6 +106,7 @@
       --shadow-md:0 10px 28px rgba(0,0,0,.45), 0 2px 8px rgba(0,0,0,.3);
       --shadow-lg:0 24px 56px rgba(0,0,0,.55), 0 6px 16px rgba(0,0,0,.35);
       --coa-tuition:#5b9fe8; --coa-housing:#3ec996; --coa-other:#f2895c;
+      --c-aid:#2eab77; --c-work:#3d78bd; --c-loan:#bd7716; --c-gap:#d1447a;
       --banner-info-border:rgba(79,143,208,.35); --banner-warn-border:rgba(240,169,78,.35); --banner-warn-text:#f0a94e; --banner-escalate-border:rgba(242,114,114,.35);
       --role-student-bg:rgba(129,140,248,.18); --role-student-text:#c7d2fe; --role-parent-bg:rgba(236,72,153,.18); --role-parent-text:#f9a8d4;
       --panel-rgb:22,32,47;
@@ -122,6 +128,7 @@
     --shadow-md:0 10px 28px rgba(0,0,0,.45), 0 2px 8px rgba(0,0,0,.3);
     --shadow-lg:0 24px 56px rgba(0,0,0,.55), 0 6px 16px rgba(0,0,0,.35);
     --coa-tuition:#5b9fe8; --coa-housing:#3ec996; --coa-other:#f2895c;
+    --c-aid:#2eab77; --c-work:#3d78bd; --c-loan:#bd7716; --c-gap:#d1447a;
     --banner-info-border:rgba(79,143,208,.35); --banner-warn-border:rgba(240,169,78,.35); --banner-warn-text:#f0a94e; --banner-escalate-border:rgba(242,114,114,.35);
     --role-student-bg:rgba(129,140,248,.18); --role-student-text:#c7d2fe; --role-parent-bg:rgba(236,72,153,.18); --role-parent-text:#f9a8d4;
     --panel-rgb:22,32,47;
@@ -205,6 +212,56 @@
   .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr));}
   .eyebrow{font-family:var(--font-display); font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.11em; color:var(--brand); margin:0 0 5px 0;}
   .lede{color:var(--ink-soft); font-size:14px; margin-bottom:4px;}
+
+  .topic-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:8px;}
+  .topic-chip{
+    display:flex; align-items:center; gap:9px; padding:9px 11px; border-radius:var(--radius-sm);
+    background:var(--bg); border:1px solid var(--line-soft); cursor:pointer; transition:border-color .12s, transform .12s, box-shadow .12s;
+  }
+  .topic-chip:hover{border-color:var(--brand-2); transform:translateY(-1px); box-shadow:var(--shadow-xs);}
+  .topic-chip-ic{
+    width:28px;height:28px;border-radius:8px; flex:0 0 auto; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg,var(--brand-2),var(--brand-dark));
+  }
+  .topic-chip-label{font-size:12.5px; font-weight:700; line-height:1.25;}
+
+  .article-head{display:flex; align-items:center; gap:12px; margin-bottom:12px;}
+  .article-icon{
+    width:38px;height:38px;border-radius:11px; flex:0 0 auto; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg,var(--brand-2),var(--brand-dark)); box-shadow:0 6px 14px rgba(30,58,95,.28);
+  }
+  .article-eyebrow{font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--brand-2); margin-bottom:2px;}
+  .pull-quote{
+    border-left:3px solid var(--brand-2); background:var(--brand-soft); padding:10px 14px; border-radius:0 8px 8px 0;
+    font-family:var(--font-display); font-weight:700; font-size:14.5px; color:var(--brand-dark); margin-bottom:14px; line-height:1.4;
+  }
+
+  .chart-legend{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:16px; font-size:12px; color:var(--ink-soft);}
+  .chart-legend span{display:inline-flex; align-items:center; gap:6px;}
+  .chart-legend i{width:10px;height:10px;border-radius:3px; display:inline-block;}
+  .offer-row{margin-bottom:20px;}
+  .offer-row:last-child{margin-bottom:0;}
+  .offer-row-head{display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:4px; margin-bottom:6px;}
+  .offer-row-head .college{font-family:var(--font-display); font-weight:700; font-size:14px;}
+  .offer-row-head .net{font-size:13px; color:var(--ink-faint);}
+  .offer-row-head .net strong{font-family:var(--font-display); font-size:16px; color:var(--ink); font-variant-numeric:tabular-nums;}
+  .stack-bar{display:flex; height:28px; border-radius:8px; overflow:hidden; background:var(--line-soft);}
+  .stack-seg{height:100%; position:relative; cursor:default; transition:filter .1s; min-width:2px;}
+  .stack-seg:not(:last-child){border-right:2px solid var(--panel);}
+  .stack-seg:hover{filter:brightness(1.12);}
+  .stack-seg .tip{
+    position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%);
+    background:var(--ink); color:var(--bg); font-size:11.5px; font-weight:600; padding:6px 10px;
+    border-radius:7px; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .12s; z-index:5;
+    font-variant-numeric:tabular-nums;
+  }
+  .stack-seg .tip::after{content:""; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:var(--ink);}
+  .stack-seg:hover .tip{opacity:1;}
+  .seg-aid{background:var(--c-aid);}
+  .seg-work{background:var(--c-work);}
+  .seg-loan{background:var(--c-loan);}
+  .seg-gap{background:var(--c-gap);}
+  @media print{ .stack-seg .tip{display:none;} }
 
   .btn{
     display:inline-flex; align-items:center; gap:7px; padding:11px 20px; border-radius:12px;
@@ -397,6 +454,7 @@
       --warn:#b45309; --warn-soft:#fef3c7; --banner-warn-text:#92400e;
       --danger:#b91c1c; --danger-soft:#fee2e2;
       --ok:#166534; --ok-soft:#dcfce7;
+      --c-aid:#166534; --c-work:#3d7ab5; --c-loan:#d97706; --c-gap:#9f1239;
     }
     body{background:none;}
     .sidebar, .mobile-nav, .topbar select, #theme-toggle-btn, .disclaimer-bar, #consent-root,
@@ -1401,6 +1459,9 @@ const SCHOLARSHIPS = [
    ========================================================================= */
 const GUIDE_ARTICLES = [
   { id:"fafsa-basics", title:"FAFSA, in plain language", titleEs:"La FAFSA, en lenguaje sencillo",
+    icon:"document", eyebrow:"Federal aid", eyebrowEs:"Ayuda federal",
+    quote:"It's free — anyone asking you to pay to file it is not legitimate.",
+    quoteEs:"Es gratis — cualquiera que te pida pagar para presentarla no es legítimo.",
     body:[
       "FAFSA (Free Application for Federal Student Aid) is the form nearly every college and the federal government uses to figure out what your family can afford and what aid you qualify for. It's free — anyone asking you to pay to file it is not legitimate.",
       "You'll need a StudentAid.gov account, and generally so will one parent (called a \"contributor\") if you're a dependent student. Each contributor creates their own account and enters their own information directly — you can't do it for them.",
@@ -1415,6 +1476,9 @@ const GUIDE_ARTICLES = [
     ],
     sourceKey:"fafsaCycle" },
   { id:"state-aid-basics", title:"State financial aid, generally", titleEs:"Ayuda financiera estatal, en general",
+    icon:"building", eyebrow:"State aid", eyebrowEs:"Ayuda estatal",
+    quote:"Filing early — not just before the deadline — genuinely matters more here than for most other aid.",
+    quoteEs:"Presentar temprano — no solo antes de la fecha límite — realmente importa más aquí que para la mayoría de otras ayudas.",
     body:[
       "Most states run their own grant programs on top of federal aid, usually funded by the state government and only available to residents attending eligible in-state (sometimes any) colleges.",
       "These almost always have their own deadline, separate from any college's admissions deadline — and it's often earlier than you'd expect, sometimes tied to the FAFSA priority filing date rather than any specific college's calendar.",
@@ -1429,6 +1493,9 @@ const GUIDE_ARTICLES = [
     ],
     sourceKey:"calGrantDates" },
   { id:"scholarships-basics", title:"Outside scholarships: what's worth your time", titleEs:"Becas externas: qué vale la pena tu tiempo",
+    icon:"scholarship", eyebrow:"Scholarships", eyebrowEs:"Becas",
+    quote:"Legitimate scholarships never charge an application fee and never guarantee you'll win.",
+    quoteEs:"Las becas legítimas nunca cobran una cuota de solicitud y nunca garantizan que ganarás.",
     body:[
       "\"Outside\" or \"private\" scholarships are ones you apply for directly from an organization — a company, foundation, or nonprofit — rather than through a college. They're not part of FAFSA or CSS Profile at all.",
       "Focus on effort-to-reward: a handful of larger, well-matched scholarships you have a real shot at usually beats dozens of $500 raffles. Watch for real eligibility fit (state, major, background, income) rather than applying everywhere generically.",
@@ -1443,6 +1510,9 @@ const GUIDE_ARTICLES = [
     ],
     sourceKey:null },
   { id:"offers-basics", title:"Reading a financial aid offer", titleEs:"Cómo leer una oferta de ayuda financiera",
+    icon:"scale", eyebrow:"Offers", eyebrowEs:"Ofertas",
+    quote:"Cost of attendance minus gift aid only — that's your real net price before considering loans or work.",
+    quoteEs:"Costo de asistencia menos solo la ayuda regalada — ese es tu precio neto real antes de considerar préstamos o trabajo.",
     body:[
       "An aid offer (sometimes called an \"award letter\") lists the total cost of attendance and how it proposes to cover it: gift aid (grants and scholarships — money you don't repay), work-study (money you earn, not cash upfront), and loans (money you or a parent borrow and must repay, sometimes with interest).",
       "The single most useful number to calculate yourself is: cost of attendance minus gift aid only. That's your real net price before considering loans or work — loans are debt, not a discount, no matter how an offer's layout presents them.",
@@ -1457,6 +1527,9 @@ const GUIDE_ARTICLES = [
     ],
     sourceKey:null },
   { id:"loans-basics", title:"Student loans, in plain language", titleEs:"Préstamos estudiantiles, en lenguaje sencillo",
+    icon:"dollar", eyebrow:"Loans", eyebrowEs:"Préstamos",
+    quote:"Treat loans as debt, not a discount, the same way this app's Offers tool does.",
+    quoteEs:"Trata los préstamos como deuda, no como un descuento, de la misma manera que lo hace la herramienta de Ofertas de esta app.",
     body:[
       "A loan is money you (or a parent) borrow to help pay for college — it isn't gift aid, and every dollar gets repaid, usually with interest. An aid offer that leads with a big loan number can look like \"free money\" if you don't read closely; treat loans as debt, not a discount, the same way this app's Offers tool does.",
       "For loans first disbursed between July 1, 2026 and June 30, 2027, the federal fixed interest rates are 6.52% for undergraduate Direct Subsidized/Unsubsidized loans, 8.07% for graduate/professional Direct Unsubsidized loans, and 9.07% for Direct PLUS loans (Parent PLUS and Grad PLUS). Subsidized loans don't accrue interest while you're enrolled at least half-time; unsubsidized loans start accruing interest immediately, even while you're in school.",
@@ -1471,6 +1544,9 @@ const GUIDE_ARTICLES = [
     ],
     sourceKey:"loanRates2627" },
   { id:"workstudy-basics", title:"Work-study, in plain language", titleEs:"Estudio-trabajo, en lenguaje sencillo",
+    icon:"clock", eyebrow:"Work-study", eyebrowEs:"Estudio-trabajo",
+    quote:"Being awarded work-study doesn't guarantee a job.",
+    quoteEs:"Que te otorguen estudio-trabajo no garantiza un empleo.",
     body:[
       "Federal Work-Study is money you earn, not money you're handed — it's part of your financial aid package, but it only becomes real income if you find and work an approved job (usually on campus, sometimes an approved off-campus or community-service employer).",
       "Being awarded work-study doesn't guarantee a job. You typically still have to search school job postings and interview, same as any other part-time job — listings can fill up fast, especially right after the semester starts.",
@@ -1485,6 +1561,9 @@ const GUIDE_ARTICLES = [
     ],
     sourceKey:"workStudyHandbook" },
   { id:"appeals-basics", title:"Appealing a financial aid offer", titleEs:"Cómo apelar una oferta de ayuda financiera",
+    icon:"pen", eyebrow:"Appeals", eyebrowEs:"Apelaciones",
+    quote:"Appealing is free — it costs you time, not money, and it's a completely normal, expected part of the process.",
+    quoteEs:"Apelar es gratis — te cuesta tiempo, no dinero, y es una parte completamente normal y esperada del proceso.",
     body:[
       "If your family's financial situation has changed since you filed (job loss, reduced income, a new medical expense, divorce, a death) or you have a genuinely better offer from a comparable college, most financial aid offices will consider a documented appeal — sometimes called \"professional judgment\" or a \"special circumstances\" review.",
       "Appeals work best when they're specific and documented, not just \"we can't afford this.\" Bring real numbers and real documents (a layoff letter, medical bills, a competing offer).",
@@ -1497,6 +1576,9 @@ const GUIDE_ARTICLES = [
     ],
     sourceKey:null },
   { id:"credit-score-basics", title:"Credit score basics: building credit vs. a student credit card", titleEs:"Fundamentos del puntaje de crédito: construir crédito vs. una tarjeta de crédito estudiantil",
+    icon:"creditCard", eyebrow:"Credit", eyebrowEs:"Crédito",
+    quote:"A credit card is not free money any more than a loan is.",
+    quoteEs:"Una tarjeta de crédito no es dinero gratis, igual que tampoco lo es un préstamo.",
     body:[
       "A credit score (roughly 300–850) is a number lenders, landlords, phone companies, and even some employers use to judge how risky it is to extend you credit. It's built mainly from payment history, how much of your available credit you're using, how long you've had credit, and the mix of credit types you have.",
       "It starts mattering earlier than most students expect — not just for a future credit card or car loan, but for renting an apartment, getting a phone plan without a big deposit, and sometimes insurance rates.",
@@ -1511,6 +1593,9 @@ const GUIDE_ARTICLES = [
     ],
     sourceKey:"creditScoreCfpb" },
   { id:"w4-basics", title:"Understanding your W-4", titleEs:"Entendiendo tu W-4",
+    icon:"notepad", eyebrow:"Taxes", eyebrowEs:"Impuestos",
+    quote:"Withhold too little and you can owe a surprise tax bill; withhold too much and you're giving the government an interest-free loan of your own money.",
+    quoteEs:"Retener muy poco y puedes deber una factura de impuestos sorpresa; retener demasiado y le estás dando al gobierno un préstamo sin intereses de tu propio dinero.",
     body:[
       "A W-4 (Employee's Withholding Certificate) is the form you fill out when you start any job — including a work-study job — telling your employer how much federal income tax to hold back from each paycheck.",
       "Getting it wrong in either direction has a real cost: withhold too little and you can owe a surprise tax bill (sometimes with a penalty); withhold too much and you're giving the government an interest-free loan of your own money until you file a return and get it back.",
@@ -1534,10 +1619,23 @@ function renderGuide(){
     <div class="card">\
       <h2>' + t("guide.heading") + '</h2>\
       <p class="muted">' + t("guide.subtitle") + '</p>\
+      <div class="eyebrow" style="margin-top:16px; margin-bottom:10px;">' + t("guide.quickNav") + '</div>\
+      <div class="topic-grid">' + GUIDE_ARTICLES.map(a => '\
+        <div class="topic-chip" data-guide-link="' + a.id + '">\
+          <span class="topic-chip-ic">' + badgeIcon(a.icon, 15) + '</span>\
+          <span class="topic-chip-label">' + esc(trField(a,"title")) + '</span>\
+        </div>').join("") + '</div>\
     </div>\
     ' + GUIDE_ARTICLES.map(a => '\
       <div class="card" id="guide-' + a.id + '" style="' + (focus===a.id ? 'border-color:var(--brand);' : '') + '">\
-        <h2>' + esc(trField(a,"title")) + '</h2>\
+        <div class="article-head">\
+          <div class="article-icon">' + badgeIcon(a.icon, 20) + '</div>\
+          <div>\
+            <div class="article-eyebrow">' + esc(t("guide.heading")) + ' · ' + esc(trField(a,"eyebrow")) + '</div>\
+            <h2 style="margin:0;">' + esc(trField(a,"title")) + '</h2>\
+          </div>\
+        </div>\
+        <div class="pull-quote">' + esc(trField(a,"quote")) + '</div>\
         ' + trField(a,"body").map(p => '<p>' + esc(p) + '</p>').join("") + '\
         ' + (a.sourceKey ? '<p>' + whyButton(a.title, t("guide.whyExplanation"), a.sourceKey) + '</p>' : '') + '\
       </div>').join("");
@@ -2259,6 +2357,7 @@ const I18N = {
     "guide.heading": "Guide",
     "guide.subtitle": "General, non-personalized explainers — the same for every reader. Your personalized dashboard, tasks, and deadlines live in \"My Roadmap\"; this is background reading, not your specific to-do list.",
     "guide.whyExplanation": "General background reading, not tied to your specific answers.",
+    "guide.quickNav": "Jump to a topic",
   },
   es: {
     "welcome.pill": "Navegador Financiero de California",
@@ -2598,6 +2697,7 @@ const I18N = {
     "guide.heading": "Guía",
     "guide.subtitle": "Explicaciones generales, no personalizadas — las mismas para cada lector. Tu panel personalizado, tareas y fechas límite están en \"Mi Plan\"; esto es lectura de referencia, no tu lista de tareas específica.",
     "guide.whyExplanation": "Lectura de referencia general, no vinculada a tus respuestas específicas.",
+    "guide.quickNav": "Ir a un tema",
   },
 };
 function t(key){
@@ -2786,10 +2886,17 @@ const UI_ICON_PATHS = {
   notepad: '<path d="M8 3h8a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/>',
   arrowDown: '<line x1="12" y1="4" x2="12" y2="18"/><path d="m6 12 6 6 6-6"/>',
   idCard: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="12" r="2.2"/><line x1="14" y1="9.5" x2="18" y2="9.5"/><line x1="14" y1="12" x2="18" y2="12"/><line x1="14" y1="14.5" x2="18" y2="14.5"/><line x1="6.5" y1="16.5" x2="11.5" y2="16.5"/>',
+  scholarship: '<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.3c0-1.4 1.1-2.3 2.5-2.3s2.5.9 2.5 2c0 2.6-5 1.6-5 4.2 0 1.1 1.1 2.1 2.5 2.1s2.5-1 2.5-2.3"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/>',
+  creditCard: '<rect x="2" y="6" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>',
 };
 function uiIcon(name, size, extra){
   size = size || 16;
   return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:0 0 auto; vertical-align:-3px;' + (extra || "") + '">' + UI_ICON_PATHS[name] + '</svg>';
+}
+function badgeIcon(name, size){
+  size = size || 16;
+  return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + UI_ICON_PATHS[name] + '</svg>';
 }
 const THEME_ICONS = { system: uiIcon("auto", 16), light: uiIcon("sun", 16), dark: uiIcon("moon", 16) };
 const NAV_ITEMS = [
@@ -4383,10 +4490,37 @@ function renderOfferComparison(){
     if (gap > 5000) warnings.push(es ? "Hay una brecha significativa sin explicar entre el costo total y todo lo cubierto — llama a la oficina de ayuda financiera y pregunta directamente qué la cubre." : "There's a meaningful unexplained gap between total cost and everything covered — call the financial aid office and ask directly what covers it.");
     return { college, o, giftAid, borrowed, netPrice, gap, fourYear, totalMonthly, totalInterest, totalRepaid, warnings };
   });
+  const maxCoa = Math.max.apply(null, rows.map(r => r.o.coa));
+  const barSegKeys = [
+    { key:"giftAid", cls:"seg-aid", label: es?"Ayuda regalada":"Gift aid" },
+    { key:"workStudy", cls:"seg-work", label: es?"Estudio-trabajo":"Work-study" },
+    { key:"borrowed", cls:"seg-loan", label: es?"Prestado (préstamos)":"Borrowed (loans)" },
+    { key:"gap", cls:"seg-gap", label: es?"Brecha restante":"Remaining gap" },
+  ];
+  const chartHtml = '\
+    <div class="chart-legend">' + barSegKeys.map(s => '<span><i class="' + s.cls + '"></i>' + esc(s.label) + '</span>').join("") + '</div>\
+    ' + rows.map(r => {
+      const values = { giftAid:r.giftAid, workStudy:r.o.workStudy, borrowed:r.borrowed, gap:Math.max(0, r.gap) };
+      const widthPct = (r.o.coa / maxCoa * 100).toFixed(2);
+      const segsHtml = barSegKeys.filter(s => values[s.key] > 0).map(s => {
+        const segPct = (values[s.key] / r.o.coa * 100).toFixed(2);
+        return '<div class="stack-seg ' + s.cls + '" style="width:' + segPct + '%;" title="' + esc(s.label) + ': $' + values[s.key].toLocaleString() + '"></div>';
+      }).join("");
+      return '\
+      <div class="offer-row">\
+        <div class="offer-row-head"><span class="college">' + esc(r.college ? r.college.name : r.o.college) + '</span><span class="net">' + (es?"Precio neto":"Net price") + ' <strong>$' + r.netPrice.toLocaleString() + '</strong></span></div>\
+        <div class="stack-bar" style="width:' + widthPct + '%;">' + segsHtml + '</div>\
+      </div>';
+    }).join("") + '\
+  ';
   return '\
     <div class="card">\
       <h2>' + (es?"Comparación":"Comparison") + '</h2>\
-      <table>\
+      ' + chartHtml + '\
+      <details class="howto" style="margin-top:6px;">\
+        <summary class="howto-toggle"><span aria-hidden="true">▸</span> ' + (es?"Ver tabla completa":"See full table") + '</summary>\
+        <div class="howto-box">\
+        <table>\
         <thead><tr><th>' + (es?"Universidad":"College") + '</th><th>' + (es?"Costo de asistencia":"Cost of attendance") + '</th><th>' + (es?"Ayuda regalada (subvenciones+becas)":"Gift aid (grants+scholarships)") + '</th><th>' + (es?"Precio neto (año 1)":"Net price (year 1)") + '</th><th>' + (es?"Estudio-trabajo":"Work-study") + '</th><th>' + (es?"Prestado (préstamos)":"Borrowed (loans)") + '</th><th>' + (es?"Brecha restante":"Remaining gap") + '</th><th></th></tr></thead>\
         <tbody>' + rows.map(r => '\
           <tr>\
@@ -4399,7 +4533,9 @@ function renderOfferComparison(){
             <td>$' + r.gap.toLocaleString() + '</td>\
             <td><button class="btn ghost small" data-remove-offer="' + r.o.id + '">' + (es?"Quitar":"Remove") + '</button></td>\
           </tr>').join("") + '</tbody>\
-      </table>\
+        </table>\
+        </div>\
+      </details>\
     </div>\
     <div class="card">\
       <h2>' + (es?"Costo estimado a 4 años":"Estimated 4-year cost") + '</h2>\
