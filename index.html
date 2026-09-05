@@ -337,15 +337,27 @@
   .deadline-bucket-head .dot{width:9px;height:9px;border-radius:50%; flex:0 0 auto;}
   .deadline-bucket-list{display:flex; flex-direction:column; gap:7px;}
   .deadline-item{
-    display:flex; align-items:center; gap:12px; padding:10px 13px; background:var(--bg);
-    border:1px solid var(--line-soft); border-radius:var(--radius-sm); font-size:13px;
+    background:var(--bg); border:1px solid var(--line-soft); border-radius:var(--radius-sm);
+    font-size:13px; transition:border-color .12s;
   }
+  .deadline-item[open]{border-color:var(--brand-2);}
+  .deadline-item-summary{
+    display:flex; align-items:center; gap:12px; padding:10px 13px; cursor:pointer; list-style:none;
+  }
+  .deadline-item-summary::-webkit-details-marker{display:none;}
+  .deadline-item-summary::marker{content:"";}
   .deadline-item-date{flex:0 0 auto; width:92px; font-weight:700; font-variant-numeric:tabular-nums;}
   .deadline-item-date .rel{display:block; font-weight:600; font-size:11px; color:var(--ink-faint);}
   .deadline-item-body{flex:1; min-width:0;}
   .deadline-item-type{flex:0 0 auto; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-faint); background:var(--line-soft); padding:3px 8px; border-radius:999px; white-space:nowrap;}
+  .deadline-item-caret{flex:0 0 auto; color:var(--ink-faint); display:inline-block; transition:transform .12s;}
+  .deadline-item[open] .deadline-item-caret{transform:rotate(90deg); color:var(--brand-2);}
+  .deadline-item-detail{
+    display:flex; flex-direction:column; gap:10px; padding:2px 13px 14px 13px;
+    border-top:1px solid var(--line-soft); margin-top:2px; padding-top:10px; font-size:12.5px;
+  }
   @media (max-width:600px){
-    .deadline-item{flex-wrap:wrap;}
+    .deadline-item-summary{flex-wrap:wrap;}
     .deadline-item-date{width:auto;}
   }
 
@@ -4248,13 +4260,23 @@ function renderDeadlines(){
       <div class="deadline-bucket-head"><span class="dot" style="background:' + b.meta.color + ';"></span>' + esc(b.meta.label) + ' <span class="muted" style="font-weight:600;">(' + b.items.length + ')</span></div>\
       <div class="deadline-bucket-list">' + b.items.map(r => {
         const days = daysUntil(r.date);
+        const dl = deadlineStatusLabel(days);
         const rel = days >= 0 ? (es ? "faltan " + days + " días" : days + " days away") : (es ? "hace " + Math.abs(days) + " días" : Math.abs(days) + " days ago");
+        const src = SOURCES[r.sourceKey];
         return '\
-        <div class="deadline-item">\
-          <div class="deadline-item-date">' + fmtDate(r.date) + '<span class="rel">' + rel + '</span></div>\
-          <div class="deadline-item-body"><strong>' + esc(r.who) + '</strong><span class="muted"> — ' + esc(r.label) + '</span></div>\
-          <span class="deadline-item-type">' + esc(typeLabels[r.type] || r.type) + '</span>\
-        </div>';
+        <details class="deadline-item">\
+          <summary class="deadline-item-summary">\
+            <div class="deadline-item-date">' + fmtDate(r.date) + '<span class="rel">' + rel + '</span></div>\
+            <div class="deadline-item-body"><strong>' + esc(r.who) + '</strong><span class="muted"> — ' + esc(r.label) + '</span></div>\
+            <span class="deadline-item-type">' + esc(typeLabels[r.type] || r.type) + '</span>\
+            <span class="deadline-item-caret" aria-hidden="true">▸</span>\
+          </summary>\
+          <div class="deadline-item-detail">\
+            <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">' + sourceBadge(r.status) + ' <span class="badge ' + dl.cls + '">' + dl.text + '</span></div>\
+            <div>' + addToCalendarLink(r.who + " — " + r.label, r.date, "From Atlas. Verify the current date directly before relying on it.") + '</div>\
+            <div style="display:flex; flex-wrap:wrap; gap:14px; align-items:center;">' + sourceLinkButton(r.sourceKey, es?"Fuente →":"Source →") + whyButton(r.label, (es?"Obtenido de ":"Sourced from ") + (src?src.org:(es?"una nota interna":"an internal note")) + ".", r.sourceKey) + '</div>\
+          </div>\
+        </details>';
       }).join("") + '</div>\
     </div>').join("");
   return '\
