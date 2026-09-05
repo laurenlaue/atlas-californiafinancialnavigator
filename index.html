@@ -327,6 +327,28 @@
   .deadline-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px;}
   .deadline-list li{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; background:var(--bg); border:1px solid var(--line-soft); border-radius:var(--radius-sm); font-size:13px;}
 
+  /* Deadlines page — grouped by real urgency (overdue/this month/next 3
+     months/later), not decoration: the grouping itself is the information,
+     so someone can tell at a glance whether anything needs attention now
+     without reading every row. Full precise table stays underneath. */
+  .deadline-bucket{margin-bottom:18px;}
+  .deadline-bucket:last-child{margin-bottom:0;}
+  .deadline-bucket-head{display:flex; align-items:center; gap:8px; font-family:var(--font-display); font-weight:800; font-size:13px; margin-bottom:9px;}
+  .deadline-bucket-head .dot{width:9px;height:9px;border-radius:50%; flex:0 0 auto;}
+  .deadline-bucket-list{display:flex; flex-direction:column; gap:7px;}
+  .deadline-item{
+    display:flex; align-items:center; gap:12px; padding:10px 13px; background:var(--bg);
+    border:1px solid var(--line-soft); border-radius:var(--radius-sm); font-size:13px;
+  }
+  .deadline-item-date{flex:0 0 auto; width:92px; font-weight:700; font-variant-numeric:tabular-nums;}
+  .deadline-item-date .rel{display:block; font-weight:600; font-size:11px; color:var(--ink-faint);}
+  .deadline-item-body{flex:1; min-width:0;}
+  .deadline-item-type{flex:0 0 auto; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-faint); background:var(--line-soft); padding:3px 8px; border-radius:999px; white-space:nowrap;}
+  @media (max-width:600px){
+    .deadline-item{flex-wrap:wrap;}
+    .deadline-item-date{width:auto;}
+  }
+
   .field{margin-bottom:16px;}
   .field label{display:block; font-weight:700; margin-bottom:6px; font-size:13.5px;}
   .field .hint{font-size:12px; color:var(--ink-faint); margin-bottom:8px;}
@@ -2190,6 +2212,9 @@ const I18N = {
     "dashboard.roleView.student": "Student view",
     "dashboard.welcomeBack": "Welcome back.",
     "dashboard.subtitle": "Here's where things stand — pick up wherever makes sense today.",
+    "dashboard.skipped.heading": "A few questions you skipped",
+    "dashboard.skipped.subtitle": "Answering these unlocks guidance specific to your situation — nothing on your roadmap changes until you do, and nothing here is required.",
+    "dashboard.skipped.answerBtn": "Answer now",
     "dashboard.stat.priorityTasks": "Priority tasks right now",
     "dashboard.stat.tasksCompleted.parent": "Tasks completed (parent view)",
     "dashboard.stat.tasksCompleted.student": "Tasks completed (student view)",
@@ -2530,6 +2555,9 @@ const I18N = {
     "dashboard.roleView.student": "Vista de estudiante",
     "dashboard.welcomeBack": "Bienvenido(a) de nuevo.",
     "dashboard.subtitle": "Así está la situación — retoma donde tenga más sentido hoy.",
+    "dashboard.skipped.heading": "Algunas preguntas que omitiste",
+    "dashboard.skipped.subtitle": "Responderlas desbloquea orientación específica para tu situación — nada en tu plan cambia hasta que lo hagas, y nada aquí es obligatorio.",
+    "dashboard.skipped.answerBtn": "Responder ahora",
     "dashboard.stat.priorityTasks": "Tareas prioritarias ahora",
     "dashboard.stat.tasksCompleted.parent": "Tareas completadas (vista de padre/madre)",
     "dashboard.stat.tasksCompleted.student": "Tareas completadas (vista de estudiante)",
@@ -3468,6 +3496,17 @@ const ONBOARDING_STEPS = [
 function visibleSteps(){
   return ONBOARDING_STEPS.filter(s => !s.showIf || s.showIf(state.answers));
 }
+/* Steps left blank via "Skip for now" — deliberately distinct from an
+   explicit "prefer_not_to_answer" choice, which counts as answered since
+   it's a real decision, not an omission. Used to nudge people back rather
+   than silently withholding situational guidance forever. */
+function skippedOnboardingSteps(){
+  if (!state.onboardingComplete) return [];
+  return visibleSteps().filter(step => {
+    const val = state.answers[step.key];
+    return step.multi ? !(Array.isArray(val) && val.length) : !val;
+  });
+}
 
 function renderOnboarding(){
   const steps = visibleSteps();
@@ -3615,6 +3654,15 @@ function renderShell(){
 function attachShellHandlers(){
   document.querySelectorAll('[data-route]').forEach(btn => {
     btn.addEventListener("click", () => { state.route = btn.getAttribute("data-route"); state.mobileNavOpen = false; render(); });
+  });
+  document.querySelectorAll('[data-answer-step]').forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.getAttribute("data-answer-step");
+      const idx = visibleSteps().findIndex(s => s.key === key);
+      state.onboardingStep = idx >= 0 ? idx : 0;
+      state.route = "onboarding";
+      render();
+    });
   });
   const mobileNavToggle = document.getElementById("mobile-nav-toggle-btn");
   if (mobileNavToggle) mobileNavToggle.addEventListener("click", () => { state.mobileNavOpen = !state.mobileNavOpen; render(); });
@@ -3917,6 +3965,7 @@ function renderDashboard(){
   const taskPct = totalCount > 0 ? Math.round(completedCount / totalCount * 100) : 0;
   const ctx = ctxFromState();
   const matchedScholarshipCount = SCHOLARSHIPS.filter(s => !s.identityTags.length || s.identityTags.some(t => ctx.identities.includes(t))).length;
+  const skipped = skippedOnboardingSteps();
 
   return '\
     <div style="margin-bottom:18px;">\
@@ -3924,6 +3973,17 @@ function renderDashboard(){
       <h2 style="font-size:24px; margin-bottom:2px;">' + t("dashboard.welcomeBack") + '</h2>\
       <p class="muted" style="margin-bottom:0;">' + t("dashboard.subtitle") + '</p>\
     </div>\
+    ' + (skipped.length ? '\
+    <div class="card" style="border-color:var(--brand-2);">\
+      <h2>' + t("dashboard.skipped.heading") + '</h2>\
+      <p class="muted">' + t("dashboard.skipped.subtitle") + '</p>\
+      <ul style="list-style:none; margin:12px 0 0; padding:0; display:flex; flex-direction:column; gap:8px;">' + skipped.map(s => '\
+        <li style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 12px; background:var(--bg); border:1px solid var(--line-soft); border-radius:var(--radius-sm);">\
+          <span style="font-size:13.5px; font-weight:600;">' + esc(t("onboarding." + s.key + ".title")) + '</span>\
+          <button class="btn secondary small" data-answer-step="' + s.key + '">' + t("dashboard.skipped.answerBtn") + '</button>\
+        </li>').join("") + '\
+      </ul>\
+    </div>' : '') + '\
     ' + escalations.map(w => renderEscalationBanner(w)).join("") + '\
     ' + warnings.map(w => '<div class="banner warn">' + uiIcon("warn", 15) + ' <strong>' + esc(w.title) + '</strong> — ' + esc(w.description) + '<div class="task-meta">' + whyButton(w.title, w.explanation, w.sourceKey) + '</div>' + howToBlock(w.id, w.howTo) + '</div>').join("") + '\
     <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); margin-bottom:6px;">\
@@ -4173,19 +4233,50 @@ function renderDeadlines(){
     {key:"all", label:(es?"Todas":"All") + " (" + rows.length + ")"},
     {key:"admissions", label:(es?"Admisiones":"Admissions") + " (" + rows.filter(r=>!r.financial).length + ")"},
   ];
+  // Grouped by real urgency, not decoration — the bucket someone falls into
+  // IS the information (nothing to do right now vs. something due this
+  // month), so it can be read at a glance without scanning every row.
+  const URGENCY_BUCKETS = [
+    { key:"overdue", label: es?"Atrasado":"Overdue", color:"var(--danger)", test:d => d < 0 },
+    { key:"soon", label: es?"Este mes":"This month", color:"var(--warn)", test:d => d >= 0 && d <= 30 },
+    { key:"upcoming", label: es?"Próximos 3 meses":"Next 3 months", color:"var(--brand-2)", test:d => d > 30 && d <= 120 },
+    { key:"later", label: es?"Más adelante":"Later", color:"var(--ink-faint)", test:d => d > 120 },
+  ];
+  const buckets = URGENCY_BUCKETS.map(b => ({ meta:b, items: filtered.filter(r => b.test(daysUntil(r.date))) })).filter(b => b.items.length);
+  const timelineHtml = buckets.map(b => '\
+    <div class="deadline-bucket">\
+      <div class="deadline-bucket-head"><span class="dot" style="background:' + b.meta.color + ';"></span>' + esc(b.meta.label) + ' <span class="muted" style="font-weight:600;">(' + b.items.length + ')</span></div>\
+      <div class="deadline-bucket-list">' + b.items.map(r => {
+        const days = daysUntil(r.date);
+        const rel = days >= 0 ? (es ? "faltan " + days + " días" : days + " days away") : (es ? "hace " + Math.abs(days) + " días" : Math.abs(days) + " days ago");
+        return '\
+        <div class="deadline-item">\
+          <div class="deadline-item-date">' + fmtDate(r.date) + '<span class="rel">' + rel + '</span></div>\
+          <div class="deadline-item-body"><strong>' + esc(r.who) + '</strong><span class="muted"> — ' + esc(r.label) + '</span></div>\
+          <span class="deadline-item-type">' + esc(typeLabels[r.type] || r.type) + '</span>\
+        </div>';
+      }).join("") + '</div>\
+    </div>').join("");
   return '\
     <div class="card">\
       <h2>' + (es?"Calendario de fechas límite":"Deadline calendar") + '</h2>\
       <p class="muted">' + (es ? 'Cada fecha límite que realmente mueve dinero — ayuda estatal y becas — más la fecha de admisión de cada universidad guardada como referencia. Perder una fecha límite financiera te puede costar dinero real, por eso esto muestra primero lo financiero por defecto. Trasfondo general sobre cómo funcionan las fechas límite de ayuda estatal: ' : 'Every deadline that actually moves money — state aid and scholarships — plus each saved college\'s admissions date for reference. Missing a financial deadline can cost you real dollars, which is why this defaults to money-first. General background on how state aid deadlines work: ') + guideLink("state-aid-basics", t("nav.guide")) + '.</p>\
       <div class="tabs" role="tablist" aria-label="Filter by deadline type">' + tabs.map(tb => '<button role="tab" aria-selected="' + (filter===tb.key) + '" data-deadline-filter="' + tb.key + '">' + esc(tb.label) + '</button>').join("") + '</div>\
-      <table>\
+      ' + (filtered.length ? timelineHtml : '<p class="muted">' + (es ? "Aún no hay fechas límite en esta vista — " + (filter==="admissions" ? "guarda una universidad para ver sus fechas." : "guarda una universidad o vuelve más tarde cuando abran nuevos ciclos de becas.") : "No deadlines in this view yet — " + (filter==="admissions" ? 'save a college to see its dates.' : 'save a college or check back as new scholarship cycles open.')) + '</p>') + '\
+      ' + (filtered.length ? '\
+      <details class="howto" style="margin-top:6px;">\
+        <summary class="howto-toggle"><span aria-hidden="true">▸</span> ' + (es?"Ver tabla completa":"See full table") + '</summary>\
+        <div class="howto-box">\
+        <table>\
         <thead><tr><th>' + (es?"Fecha":"Date") + '</th><th>' + (es?"Tipo":"Type") + '</th><th>' + (es?"Qué":"What") + '</th><th>' + (es?"Estado":"Status") + '</th><th></th></tr></thead>\
-        <tbody>' + (filtered.length ? filtered.map(r => {
+        <tbody>' + filtered.map(r => {
           const days = daysUntil(r.date); const dl = deadlineStatusLabel(days);
           const src = SOURCES[r.sourceKey];
           return '<tr><td>' + fmtDate(r.date) + '<div class="muted">' + (days>=0 ? (es ? "faltan " + days + " días" : days + " days away") : (es ? "hace " + Math.abs(days) + " días" : Math.abs(days) + " days ago")) + '</div><div style="margin-top:4px;">' + addToCalendarLink(r.who + " — " + r.label, r.date, "From Atlas. Verify the current date directly before relying on it.") + '</div></td><td>' + esc(typeLabels[r.type] || r.type) + '</td><td><strong>' + esc(r.who) + '</strong><div class="muted">' + esc(r.label) + '</div></td><td>' + sourceBadge(r.status) + ' <span class="badge ' + dl.cls + '">' + dl.text + '</span></td><td style="white-space:nowrap;">' + sourceLinkButton(r.sourceKey, es?"Fuente →":"Source →") + '<div style="margin-top:6px;">' + whyButton(r.label, (es?"Obtenido de ":"Sourced from ") + (src?src.org:(es?"una nota interna":"an internal note")) + ".", r.sourceKey) + '</div></td></tr>';
-        }).join("") : '<tr><td colspan="5" class="muted">' + (es ? "Aún no hay fechas límite en esta vista — " + (filter==="admissions" ? "guarda una universidad para ver sus fechas." : "guarda una universidad o vuelve más tarde cuando abran nuevos ciclos de becas.") : "No deadlines in this view yet — " + (filter==="admissions" ? 'save a college to see its dates.' : 'save a college or check back as new scholarship cycles open.')) + '</td></tr>') + '</tbody>\
-      </table>\
+        }).join("") + '</tbody>\
+        </table>\
+        </div>\
+      </details>' : '') + '\
     </div>';
 }
 
