@@ -1,5 +1,5 @@
 {
-  "name": "compass-functions",
+  "name": "atlas-functions",
   "private": true,
-  "description": "Netlify Functions backend for the Compass award-letter parser and chat assistant."
+  "description": "Netlify Functions backend for the Atlas award-letter parser and chat assistant."
 }
